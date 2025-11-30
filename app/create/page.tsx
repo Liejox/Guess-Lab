@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Header } from "@/components/layout/header"
+import { DeployStatus } from "@/components/admin/deploy-status"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,17 +10,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useWallet } from "@/components/providers/wallet-provider"
+import { useMarketCreation } from "@/hooks/use-market-creation"
 import { useToast } from "@/hooks/use-toast"
-import { CONTRACT_ADDRESS, MODULE_NAME, CATEGORIES } from "@/lib/constants"
-import { PlusCircle, Clock, Eye, AlertCircle } from "lucide-react"
+import { CATEGORIES } from "@/lib/constants"
+import { PlusCircle, Clock, Eye, AlertCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function CreateMarketPage() {
-  const { address, connected, signAndSubmitTransaction } = useWallet()
-  const { toast } = useToast()
+  const { connected, connect } = useWallet()
+  const { createMarket, loading } = useMarketCreation()
   const router = useRouter()
-
-  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     question: "",
     category: "",
@@ -29,59 +30,44 @@ export default function CreateMarketPage() {
   })
 
   const handleCreate = async () => {
+    // Validate form
+    if (!formData.question.trim()) {
+      toast({
+        title: "⚠️ Missing Question",
+        description: "Please enter a market question",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.category) {
+      toast({
+        title: "⚠️ Missing Category", 
+        description: "Please select a category",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Check wallet connection
     if (!connected) {
       toast({
-        title: "Connect wallet",
-        description: "Please connect your wallet to create a market",
+        title: "🔒 Wallet Required",
+        description: "Please connect your Petra wallet first",
         variant: "destructive",
       })
       return
     }
 
-    if (!formData.question || !formData.category) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
-      return
-    }
+    // Create market
+    const success = await createMarket(
+      formData.question,
+      Number.parseInt(formData.commitDuration),
+      Number.parseInt(formData.revealDuration)
+    )
 
-    setLoading(true)
-    try {
-      const commitDurationSecs = Number.parseInt(formData.commitDuration) * 3600
-      const revealDurationSecs = Number.parseInt(formData.revealDuration) * 3600
-
-      const payload = {
-        type: "entry_function_payload",
-        function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::create_market`,
-        type_arguments: [],
-        arguments: [
-          CONTRACT_ADDRESS,
-          formData.question,
-          formData.category,
-          formData.marketType,
-          commitDurationSecs.toString(),
-          revealDurationSecs.toString(),
-        ],
-      }
-
-      await signAndSubmitTransaction(payload)
-
-      toast({
-        title: "Market created!",
-        description: "Your prediction market is now live.",
-      })
-
+    if (success) {
       router.push("/")
-    } catch (error: any) {
-      toast({
-        title: "Creation failed",
-        description: error.message || "Failed to create market",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -90,6 +76,7 @@ export default function CreateMarketPage() {
       <Header />
 
       <main className="container mx-auto px-4 py-8 max-w-2xl">
+        <DeployStatus />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -199,9 +186,33 @@ export default function CreateMarketPage() {
               </div>
             </div>
 
+            {/* Wallet Connection Warning */}
+            {!connected && (
+              <div className="flex items-center gap-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4 text-sm">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                <p className="text-yellow-700 dark:text-yellow-300">
+                  Please connect your wallet to create a market
+                </p>
+              </div>
+            )}
+
             {/* Submit */}
-            <Button onClick={handleCreate} disabled={loading || !connected} className="w-full" size="lg">
-              {loading ? "Creating..." : "Create Market"}
+            <Button 
+              onClick={handleCreate} 
+              disabled={loading || !formData.question.trim() || !connected} 
+              className="w-full" 
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Market...
+                </>
+              ) : !connected ? (
+                "🔒 Connect Wallet Required"
+              ) : (
+                "🎆 Create Prediction Market"
+              )}
             </Button>
           </CardContent>
         </Card>

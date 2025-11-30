@@ -10,10 +10,15 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Darkpool | Decentralized Prediction Market",
+  title: "GuessLab | Decentralized Prediction Market",
   description: "Hidden predictions, revealed outcomes. A commit-reveal prediction market on Aptos blockchain.",
-  keywords: ["prediction market", "aptos", "blockchain", "crypto", "darkpool", "defi"],
-    generator: 'v0.app'
+  keywords: ["prediction market", "aptos", "blockchain", "crypto", "guesslab", "defi"],
+  generator: 'v0.app',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/icon.png',
+  }
 }
 
 export const viewport: Viewport = {

@@ -1,20 +1,12 @@
 [package]
-name = "PredictionMarket"
-version = "1.0.0"
-authors = ["Darkpool Labs"]
+name = "aptos_prediction_market"
+version = "0.0.1"
+authors = ["you"]
 
 [addresses]
-prediction_market = "_"
+pred_market = "0xce3ebc6f453c5152f10be089a252c3703764daa0a0edb17c653f3a4820e134b3"
 
-[dev-addresses]
-prediction_market = "0xCAFE"
-
-[dependencies.AptosFramework]
-git = "https://github.com/aptos-labs/aptos-core.git"
-subdir = "aptos-move/framework/aptos-framework"
-rev = "mainnet"
-
-[dependencies.AptosStdlib]
-git = "https://github.com/aptos-labs/aptos-core.git"
-subdir = "aptos-move/framework/aptos-stdlib"
-rev = "mainnet"
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "devnet" }
+AptosStdlib   = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-stdlib", rev = "devnet" }
+MoveStdlib    = { git = "https://github.com/move-language/move.git", subdir = "language/move-stdlib", rev = "main" }

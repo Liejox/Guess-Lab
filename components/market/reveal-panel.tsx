@@ -1,14 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useWallet } from "@/components/providers/wallet-provider"
-import { useToast } from "@/hooks/use-toast"
-import { getCommitment, removeCommitment } from "@/utils/storage"
-import { hexToBytes } from "@/utils/hashing"
+import { usePredictionActions } from "@/hooks/use-prediction-actions"
+import { getCommitment } from "@/utils/storage"
 import { formatApt } from "@/utils/format"
-import { CONTRACT_ADDRESS, MODULE_NAME, SIDE } from "@/lib/constants"
+import { SIDE } from "@/lib/constants"
 import type { Market } from "@/lib/types"
 import { Eye, AlertCircle, Check, Lock } from "lucide-react"
 
@@ -19,10 +16,7 @@ interface RevealPanelProps {
 }
 
 export function RevealPanel({ market, revealed, onSuccess }: RevealPanelProps) {
-  const { address, connected, signAndSubmitTransaction } = useWallet()
-  const { toast } = useToast()
-
-  const [loading, setLoading] = useState(false)
+  const { revealBet, loading } = usePredictionActions()
 
   // Get stored commitment
   const commitment = getCommitment(market.id)
@@ -58,51 +52,7 @@ export function RevealPanel({ market, revealed, onSuccess }: RevealPanelProps) {
   }
 
   const handleReveal = async () => {
-    if (!connected || !address) {
-      toast({
-        title: "Connect wallet",
-        description: "Please connect your wallet to reveal",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setLoading(true)
-    try {
-      // Submit reveal transaction
-      const payload = {
-        type: "entry_function_payload",
-        function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::reveal_prediction`,
-        type_arguments: [],
-        arguments: [
-          CONTRACT_ADDRESS, // store_addr
-          market.id.toString(),
-          commitment.side.toString(),
-          commitment.amount.toString(),
-          Array.from(hexToBytes(commitment.salt)),
-        ],
-      }
-
-      const response = await signAndSubmitTransaction(payload)
-
-      // Remove stored commitment after successful reveal
-      removeCommitment(market.id)
-
-      toast({
-        title: "Prediction revealed!",
-        description: `Your ${commitment.side === SIDE.YES ? "YES" : "NO"} prediction is now visible.`,
-      })
-
-      onSuccess?.()
-    } catch (error: any) {
-      toast({
-        title: "Reveal failed",
-        description: error.message || "Failed to reveal prediction",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    await revealBet(market, onSuccess)
   }
 
   return (

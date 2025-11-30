@@ -1,12 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useWallet } from "@/components/providers/wallet-provider"
-import { useToast } from "@/hooks/use-toast"
+import { usePredictionActions } from "@/hooks/use-prediction-actions"
 import { formatApt } from "@/utils/format"
-import { CONTRACT_ADDRESS, MODULE_NAME, SIDE } from "@/lib/constants"
+import { SIDE } from "@/lib/constants"
 import type { Market, Commitment } from "@/lib/types"
 import { Trophy, XCircle, Gift, Loader2 } from "lucide-react"
 
@@ -17,9 +15,7 @@ interface ResultPanelProps {
 }
 
 export function ResultPanel({ market, userCommitment, onClaim }: ResultPanelProps) {
-  const { address, connected, signAndSubmitTransaction } = useWallet()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
+  const { claimReward, loading } = usePredictionActions()
 
   const isWinner = userCommitment?.side === market.winnerSide
   const winnerLabel = market.winnerSide === SIDE.YES ? "YES" : "NO"
@@ -43,41 +39,7 @@ export function ResultPanel({ market, userCommitment, onClaim }: ResultPanelProp
   const payout = calculatePayout()
 
   const handleClaim = async () => {
-    if (!connected || !address) {
-      toast({
-        title: "Connect wallet",
-        description: "Please connect your wallet to claim",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setLoading(true)
-    try {
-      const payload = {
-        type: "entry_function_payload",
-        function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::claim`,
-        type_arguments: [],
-        arguments: [CONTRACT_ADDRESS, market.id.toString()],
-      }
-
-      await signAndSubmitTransaction(payload)
-
-      toast({
-        title: "Claimed!",
-        description: isWinner ? `You won ${formatApt(payout)} APT!` : "Better luck next time!",
-      })
-
-      onClaim?.()
-    } catch (error: any) {
-      toast({
-        title: "Claim failed",
-        description: error.message || "Failed to claim",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    await claimReward(market, onClaim)
   }
 
   if (!userCommitment) {

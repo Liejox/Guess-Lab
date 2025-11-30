@@ -1,0 +1,8 @@
+[package]
+name = "prediction_market"
+version = "1.0.0"
+
+[addresses]
+prediction_market = "ce3ebc6f453c5152f10be089a252c3703764daa0a0edb17c653f3a4820e134b3"
+
+[dependencies]

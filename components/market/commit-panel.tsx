@@ -5,12 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useWallet } from "@/components/providers/wallet-provider"
 import { useToast } from "@/hooks/use-toast"
-import { generateSalt, generateCommitHash, hexToBytes } from "@/utils/hashing"
-import { storeCommitment, getCommitment } from "@/utils/storage"
-import { parseAptToOctas, formatApt } from "@/utils/format"
-import { CONTRACT_ADDRESS, MODULE_NAME, SIDE } from "@/lib/constants"
+import { usePredictionActions } from "@/hooks/use-prediction-actions"
+import { getCommitment } from "@/utils/storage"
+import { formatApt } from "@/utils/format"
+import { SIDE } from "@/lib/constants"
 import type { Market } from "@/lib/types"
 import { Lock, EyeOff, AlertCircle, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -21,27 +20,16 @@ interface CommitPanelProps {
 }
 
 export function CommitPanel({ market, onSuccess }: CommitPanelProps) {
-  const { address, connected, signAndSubmitTransaction } = useWallet()
   const { toast } = useToast()
+  const { commitBet, loading } = usePredictionActions()
 
   const [selectedSide, setSelectedSide] = useState<number | null>(null)
   const [amount, setAmount] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
 
   // Check if user already committed
   const existingCommitment = getCommitment(market.id)
 
   const handleCommit = async () => {
-    if (!connected || !address) {
-      toast({
-        title: "Connect wallet",
-        description: "Please connect your wallet to make a prediction",
-        variant: "destructive",
-      })
-      return
-    }
-
     if (selectedSide === null) {
       toast({
         title: "Select a side",
@@ -61,55 +49,11 @@ export function CommitPanel({ market, onSuccess }: CommitPanelProps) {
       return
     }
 
-    setLoading(true)
-    try {
-      // Generate salt and commitment hash
-      const salt = generateSalt()
-      const amountOctas = parseAptToOctas(amountNum)
-      const commitHash = generateCommitHash(selectedSide, amountOctas, salt, address)
-
-      // Store commitment locally for reveal
-      storeCommitment({
-        marketId: market.id,
-        side: selectedSide,
-        amount: amountOctas,
-        salt,
-        commitHash,
-        timestamp: Date.now(),
-      })
-
-      // Submit transaction
-      const payload = {
-        type: "entry_function_payload",
-        function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::commit_prediction`,
-        type_arguments: [],
-        arguments: [
-          CONTRACT_ADDRESS, // store_addr
-          market.id.toString(),
-          Array.from(hexToBytes(commitHash)),
-          amountOctas.toString(),
-        ],
-      }
-
-      const response = await signAndSubmitTransaction(payload)
-
-      toast({
-        title: "Prediction committed!",
-        description: "Your prediction is hidden. Remember to reveal during the reveal phase.",
-      })
-
+    await commitBet(market, selectedSide, amountNum, () => {
       setSelectedSide(null)
       setAmount("")
       onSuccess?.()
-    } catch (error: any) {
-      toast({
-        title: "Commit failed",
-        description: error.message || "Failed to submit prediction",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   if (existingCommitment) {

@@ -57,7 +57,7 @@ export default function HomePage() {
             Hidden Predictions, <span className="text-primary">Revealed Outcomes</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            The first darkpool prediction market on Aptos. Your predictions remain encrypted until the reveal phase - no
+            GuessLab - The first darkpool prediction market on Aptos. Your predictions remain encrypted until the reveal phase - no
             front-running, no bias.
           </p>
         </div>

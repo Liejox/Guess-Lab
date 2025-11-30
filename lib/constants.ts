@@ -1,14 +1,17 @@
-// Contract addresses (replace with deployed addresses)
-export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0xCAFE"
-export const MODULE_NAME = "darkpool"
+// Contract addresses (devnet only)
+export const CONTRACT_ADDRESS = "0xce3ebc6f453c5152f10be089a252c3703764daa0a0edb17c653f3a4820e134b3"
+export const MODULE_NAME = "prediction_market"
 
-// Market phases
+// Network configuration - DEVNET ONLY
+export const NETWORK = "devnet"
+export const NODE_URL = "https://fullnode.devnet.aptoslabs.com/v1"
+export const FAUCET_URL = "https://faucet.devnet.aptoslabs.com"
+
+// Market phases (must match Move contract)
 export const PHASE = {
-  CREATED: 0,
-  COMMIT: 1,
-  REVEAL: 2,
-  RESOLVED: 3,
-  DISTRIBUTED: 4,
+  COMMIT: 0,
+  REVEAL: 1,
+  RESOLVED: 2,
 } as const
 
 // Sides
@@ -37,7 +40,7 @@ export const LEVELS = [
   { level: 7, xp: 2500, title: "Prophet" },
   { level: 8, xp: 4000, title: "Legend" },
   { level: 9, xp: 6000, title: "Mythic" },
-  { level: 10, xp: 10000, title: "Darkpool Elite" },
+  { level: 10, xp: 10000, title: "GuessLab Elite" },
 ] as const
 
 // Pyth price feed IDs

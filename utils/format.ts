@@ -60,8 +60,8 @@ export function formatPercentage(value: number, total: number): string {
 /**
  * Truncate address
  */
-export function truncateAddress(address: string, start = 6, end = 4): string {
-  if (!address) return ""
+export function truncateAddress(address: string | undefined | null, start = 6, end = 4): string {
+  if (!address || typeof address !== 'string') return ""
   if (address.length <= start + end) return address
   return `${address.slice(0, start)}...${address.slice(-end)}`
 }
@@ -71,11 +71,9 @@ export function truncateAddress(address: string, start = 6, end = 4): string {
  */
 export function getPhaseLabel(phase: number): string {
   const labels: Record<number, string> = {
-    0: "Created",
-    1: "Commit Phase",
-    2: "Reveal Phase",
-    3: "Resolved",
-    4: "Distributed",
+    0: "Commit Phase",
+    1: "Reveal Phase", 
+    2: "Resolved",
   }
   return labels[phase] || "Unknown"
 }
@@ -85,11 +83,9 @@ export function getPhaseLabel(phase: number): string {
  */
 export function getPhaseColor(phase: number): string {
   const colors: Record<number, string> = {
-    0: "bg-muted text-muted-foreground",
-    1: "bg-primary/20 text-primary",
-    2: "bg-accent/20 text-accent",
-    3: "bg-success/20 text-success",
-    4: "bg-muted text-muted-foreground",
+    0: "bg-primary/20 text-primary",
+    1: "bg-accent/20 text-accent", 
+    2: "bg-success/20 text-success",
   }
   return colors[phase] || "bg-muted text-muted-foreground"
 }

@@ -21,12 +21,15 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20">
-            <Eye className="h-5 w-5 text-primary" />
-            <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
+          <div className="relative flex h-9 w-9 items-center justify-center">
+            <img 
+              src="/WhatsApp Image 2025-11-30 at 12.03.02_85860cfe.jpg" 
+              alt="GuessLab Logo" 
+              className="h-9 w-9 rounded-lg object-cover"
+            />
           </div>
           <span className="text-xl font-bold tracking-tight">
-            Dark<span className="text-primary">pool</span>
+            Guess<span className="text-primary">Lab</span>
           </span>
         </Link>
 
@@ -55,7 +58,9 @@ export function Header() {
         </nav>
 
         {/* Wallet */}
-        <WalletButton />
+        <div className="flex items-center gap-2">
+          <WalletButton />
+        </div>
       </div>
 
       {/* Mobile Navigation */}
