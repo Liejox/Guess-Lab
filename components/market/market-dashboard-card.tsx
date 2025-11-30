@@ -1,103 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useWallet } from "@/components/providers/wallet-provider";
-import { useMarketData } from "@/hooks/use-market-data";
-import { usePredictionActions } from "@/hooks/use-prediction-actions";
-import { rewardCommit, rewardReveal } from "@/lib/photon";
 import { Eye, EyeOff, Clock, TrendingUp, Users, Shield, Zap } from "lucide-react";
-import { formatCountdown } from "@/utils/format";
+import { DemoMarket } from "@/lib/demo-markets";
 
 interface MarketDashboardCardProps {
-  marketId: number;
+  market: DemoMarket;
 }
 
-export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
+export function MarketDashboardCard({ market }: MarketDashboardCardProps) {
   const { account, connected } = useWallet();
-  const { market, loading, refetch } = useMarketData(marketId, account?.address);
-  const { commitBet, revealBet, claimReward, loading: actionLoading } = usePredictionActions();
-  
   const [betAmount, setBetAmount] = useState("1");
-  const [selectedSide, setSelectedSide] = useState<1 | 2 | null>(null);
-  const [timeLeft, setTimeLeft] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Update countdown timer
-  useEffect(() => {
-    if (!market) return;
-    
-    const updateTimer = () => {
-      const now = Math.floor(Date.now() / 1000);
-      let endTime = market.phase === 0 ? market.commitEndTs : market.revealEndTs;
-      setTimeLeft(formatCountdown(endTime));
-    };
+  const yesPercentage = (market.yesPool / market.totalPool) * 100;
+  const noPercentage = (market.noPool / market.totalPool) * 100;
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [market]);
-
-  const handleCommit = async (side: 1 | 2) => {
-    if (!market || !account) return;
-    
-    const success = await commitBet(market, side, parseFloat(betAmount), () => {
-      refetch();
-      // Photon reward for commit
-      rewardCommit(account.address, marketId, { side, amount: betAmount });
-    });
+  const handleBet = async (side: 'YES' | 'NO') => {
+    if (!connected) return;
+    setLoading(true);
+    // Simulate betting
+    setTimeout(() => {
+      alert(`Bet placed: ${betAmount} APT on ${side}`);
+      setLoading(false);
+    }, 1000);
   };
-
-  const handleReveal = async () => {
-    if (!market || !account) return;
-    
-    const success = await revealBet(market, () => {
-      refetch();
-      // Photon reward for reveal
-      rewardReveal(account.address, marketId);
-    });
-  };
-
-  const handleClaim = async () => {
-    if (!market || !account) return;
-    
-    await claimReward(market, () => {
-      refetch();
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-3/4"></div>
-          <div className="h-64 bg-muted rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!market) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 text-center">
-        <h2 className="text-2xl font-bold mb-4">Market Not Found</h2>
-        <p className="text-muted-foreground">The requested market does not exist.</p>
-      </div>
-    );
-  }
-
-  const totalPool = market.totalYes + market.totalNo;
-  const yesPercentage = totalPool > 0 ? (market.totalYes / totalPool) * 100 : 50;
-  const noPercentage = totalPool > 0 ? (market.totalNo / totalPool) * 100 : 50;
 
   const getPhaseInfo = () => {
     switch (market.phase) {
-      case 0: return { label: "Commit Phase", color: "bg-blue-500", icon: EyeOff };
-      case 1: return { label: "Reveal Phase", color: "bg-yellow-500", icon: Eye };
-      case 2: return { label: "Resolved", color: "bg-green-500", icon: TrendingUp };
+      case 'COMMIT': return { label: "Commit Phase", color: "bg-blue-500", icon: EyeOff };
+      case 'REVEAL': return { label: "Reveal Phase", color: "bg-yellow-500", icon: Eye };
+      case 'RESOLVED': return { label: "Resolved", color: "bg-green-500", icon: TrendingUp };
       default: return { label: "Unknown", color: "bg-gray-500", icon: Clock };
     }
   };
@@ -114,15 +53,14 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
             <PhaseIcon className="w-4 h-4 mr-1" />
             {phaseInfo.label}
           </Badge>
-          {market.phase < 2 && (
-            <Badge variant="outline" className="gap-1">
-              <Clock className="w-3 h-3" />
-              Closes in {timeLeft}
-            </Badge>
-          )}
+          <Badge variant="outline" className="gap-1">
+            <Clock className="w-3 h-3" />
+            {market.category}
+          </Badge>
         </div>
         
         <h1 className="text-3xl font-bold text-center">{market.question}</h1>
+        <p className="text-muted-foreground">{market.description}</p>
         
         {connected && (
           <Badge variant="secondary" className="gap-1">
@@ -167,7 +105,7 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
       {/* Main Prediction Cards */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* YES Card */}
-        <Card className={`cursor-pointer transition-all hover:scale-105 ${selectedSide === 1 ? 'ring-2 ring-green-500' : ''}`}>
+        <Card className="cursor-pointer transition-all hover:scale-105">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-green-600">YES</CardTitle>
             <div className="text-3xl font-bold">{yesPercentage.toFixed(1)}%</div>
@@ -175,12 +113,12 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
           <CardContent className="space-y-4">
             <Progress value={yesPercentage} className="h-3" />
             <div className="text-center text-sm text-muted-foreground">
-              {market.totalYes / 100000000} APT staked
+              {market.yesPool.toFixed(2)} APT staked
             </div>
-            {market.phase === 0 && connected && (
+            {market.phase === 'COMMIT' && connected && (
               <Button 
-                onClick={() => handleCommit(1)}
-                disabled={actionLoading}
+                onClick={() => handleBet('YES')}
+                disabled={loading}
                 className="w-full bg-green-600 hover:bg-green-700"
                 size="lg"
               >
@@ -191,7 +129,7 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
         </Card>
 
         {/* NO Card */}
-        <Card className={`cursor-pointer transition-all hover:scale-105 ${selectedSide === 2 ? 'ring-2 ring-red-500' : ''}`}>
+        <Card className="cursor-pointer transition-all hover:scale-105">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-red-600">NO</CardTitle>
             <div className="text-3xl font-bold">{noPercentage.toFixed(1)}%</div>
@@ -199,12 +137,12 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
           <CardContent className="space-y-4">
             <Progress value={noPercentage} className="h-3" />
             <div className="text-center text-sm text-muted-foreground">
-              {market.totalNo / 100000000} APT staked
+              {market.noPool.toFixed(2)} APT staked
             </div>
-            {market.phase === 0 && connected && (
+            {market.phase === 'COMMIT' && connected && (
               <Button 
-                onClick={() => handleCommit(2)}
-                disabled={actionLoading}
+                onClick={() => handleBet('NO')}
+                disabled={loading}
                 className="w-full bg-red-600 hover:bg-red-700"
                 size="lg"
               >
@@ -216,10 +154,10 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
       </div>
 
       {/* Bet Amount Input */}
-      {market.phase === 0 && connected && (
+      {market.phase === 'COMMIT' && connected && (
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 justify-center">
               <label className="text-sm font-medium">Bet Amount:</label>
               <Input
                 type="number"
@@ -236,25 +174,6 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
         </Card>
       )}
 
-      {/* Action Buttons */}
-      {connected && (
-        <div className="flex justify-center gap-4">
-          {market.phase === 1 && market.hasCommitted && (
-            <Button onClick={handleReveal} disabled={actionLoading} size="lg">
-              <Eye className="w-4 h-4 mr-2" />
-              Reveal Prediction
-            </Button>
-          )}
-          
-          {market.phase === 2 && (
-            <Button onClick={handleClaim} disabled={actionLoading} size="lg">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Claim Rewards
-            </Button>
-          )}
-        </div>
-      )}
-
       {/* Market Stats */}
       <Card>
         <CardHeader>
@@ -266,15 +185,15 @@ export function MarketDashboardCard({ marketId }: MarketDashboardCardProps) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold">{(totalPool / 100000000).toFixed(2)}</div>
+              <div className="text-2xl font-bold">{market.totalPool.toFixed(2)}</div>
               <div className="text-sm text-muted-foreground">Total Pool (APT)</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{market.phase}</div>
-              <div className="text-sm text-muted-foreground">Current Phase</div>
+              <div className="text-2xl font-bold">{market.participants}</div>
+              <div className="text-sm text-muted-foreground">Participants</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{market.winnerSide || "TBD"}</div>
+              <div className="text-2xl font-bold">{market.outcome ? 'YES' : market.outcome === false ? 'NO' : 'TBD'}</div>
               <div className="text-sm text-muted-foreground">Winner</div>
             </div>
             <div>

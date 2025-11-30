@@ -3,24 +3,29 @@
 import { useState } from "react"
 import { Header } from "@/components/layout/header"
 import { MarketCard } from "@/components/market/market-card"
-import { useMarkets } from "@/hooks/use-markets"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { CATEGORIES, PHASE } from "@/lib/constants"
 import { Search, Filter, TrendingUp, Clock, CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DEMO_MARKETS } from "@/lib/demo-markets"
 
 type FilterType = "all" | "active" | "reveal" | "resolved"
 
+const CATEGORIES = [
+  { id: "Crypto", label: "Crypto", icon: "₿" },
+  { id: "Politics", label: "Politics", icon: "🗳️" },
+  { id: "Technology", label: "Technology", icon: "🚀" },
+  { id: "Sports", label: "Sports", icon: "⚽" },
+]
+
 export default function HomePage() {
-  const { markets, isLoading } = useMarkets()
   const [search, setSearch] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterType>("all")
 
   // Filter markets
-  const filteredMarkets = markets.filter((market) => {
+  const filteredMarkets = DEMO_MARKETS.filter((market) => {
     // Search filter
     if (search && !market.question.toLowerCase().includes(search.toLowerCase())) {
       return false
@@ -32,9 +37,9 @@ export default function HomePage() {
     }
 
     // Phase filter
-    if (filter === "active" && market.phase !== PHASE.COMMIT) return false
-    if (filter === "reveal" && market.phase !== PHASE.REVEAL) return false
-    if (filter === "resolved" && market.phase < PHASE.RESOLVED) return false
+    if (filter === "active" && market.phase !== "COMMIT") return false
+    if (filter === "reveal" && market.phase !== "REVEAL") return false
+    if (filter === "resolved" && market.phase !== "RESOLVED") return false
 
     return true
   })
@@ -119,13 +124,7 @@ export default function HomePage() {
         </div>
 
         {/* Markets Grid */}
-        {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-64 rounded-lg bg-card animate-pulse" />
-            ))}
-          </div>
-        ) : filteredMarkets.length === 0 ? (
+        {filteredMarkets.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted-foreground">No markets found</p>
           </div>

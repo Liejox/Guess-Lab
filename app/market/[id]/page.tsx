@@ -6,6 +6,7 @@ import { MarketDashboardCard } from "@/components/market/market-dashboard-card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { getMarketById } from "@/lib/demo-markets";
 
 interface MarketPageProps {
   params: Promise<{ id: string }>;
@@ -13,14 +14,15 @@ interface MarketPageProps {
 
 export default function MarketPage({ params }: MarketPageProps) {
   const { id } = use(params);
-  const marketId = parseInt(id);
+  const market = getMarketById(id);
 
-  if (isNaN(marketId)) {
+  if (!market) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">Invalid Market ID</h1>
+          <h1 className="text-2xl font-bold mb-4">Market Not Found</h1>
+          <p className="text-muted-foreground mb-6">The requested market does not exist.</p>
           <Link href="/">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -47,7 +49,7 @@ export default function MarketPage({ params }: MarketPageProps) {
         </Link>
 
         {/* Market Dashboard */}
-        <MarketDashboardCard marketId={marketId} />
+        <MarketDashboardCard market={market} />
       </main>
     </div>
   );
